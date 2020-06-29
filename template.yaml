@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  Version:
+    Type: String
+Globals:
+  Function:
+    Runtime: provided
+    Timeout: 300
+    MemorySize: 3008
+    Layers:
+      - !Ref RuntimeLayer
+Resources:
+  RuntimeLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub r-runtime-${Version}
+      ContentUri: runtime/build/layer/
+      LicenseInfo: MIT
+  RuntimeLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref RuntimeLayer
+      Principal: "*"
+  RecommendedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub r-recommended-${Version}
+      ContentUri: recommended/build/layer/
+      LicenseInfo: MIT
+  RecommendedLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref RecommendedLayer
+      Principal: "*"
+  AWSLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub r-awspack-${Version}
+      ContentUri: awspack/build/layer/
+      LicenseInfo: MIT
+  AWSLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref AWSLayer
+      Principal: "*"

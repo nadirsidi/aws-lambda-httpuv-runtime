@@ -1,0 +1,9 @@
+*.zip
+*.log
+__pycache__/
+.idea/
+*.iml
+build/
+venv/
+packaged.yaml
+.Rhistory
