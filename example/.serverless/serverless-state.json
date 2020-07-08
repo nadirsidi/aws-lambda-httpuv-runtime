@@ -162,10 +162,10 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverlessr-test/dev/1593455119298-2020-06-29T18:25:19.298Z/serverlessr-test.zip"
+                "S3Key": "serverless/serverlessr-test/dev/1593976424778-2020-07-05T19:13:44.778Z/serverlessr-test.zip"
               },
               "FunctionName": "serverlessr-test-dev-test-function",
-              "Handler": "script.handler",
+              "Handler": "plumber",
               "MemorySize": 128,
               "Role": {
                 "Fn::GetAtt": [
@@ -181,21 +181,22 @@
                 }
               },
               "Layers": [
-                "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:4"
+                "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:20",
+                "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-plumber:9"
               ]
             },
             "DependsOn": [
               "TestDashfunctionLogGroup"
             ]
           },
-          "TestDashfunctionLambdaVersion3Ue9fdWzNxFyiMC2O5W6rA1CVBlC4pZT3jWiQTai230": {
+          "TestDashfunctionLambdaVersionTk64hwqsMyrYlOrPpclMkW8m3yaSP51LcskvLn9hZU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "TestDashfunctionLambdaFunction"
               },
-              "CodeSha256": "I2mj7xTAOjLGGXkoBNklDmJeWtHRsXRHS/LGIptUv6M="
+              "CodeSha256": "uwNxb0wSRu3OtxTEnpyq1VL9b73ApeU4yEW2Fo1TAj4="
             }
           },
           "ApiGatewayRestApi": {
@@ -210,16 +211,28 @@
               "Policy": ""
             }
           },
-          "ApiGatewayMethodPost": {
+          "ApiGatewayResourceEcho": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "echo",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodEchoPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "POST",
               "RequestParameters": {},
               "ResourceId": {
-                "Fn::GetAtt": [
-                  "ApiGatewayRestApi",
-                  "RootResourceId"
-                ]
+                "Ref": "ApiGatewayResourceEcho"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -256,7 +269,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1593455118382": {
+          "ApiGatewayDeployment1593976424119": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -265,7 +278,7 @@
               "StageName": "dev"
             },
             "DependsOn": [
-              "ApiGatewayMethodPost"
+              "ApiGatewayMethodEchoPost"
             ]
           },
           "TestDashfunctionLambdaPermissionApiGateway": {
@@ -315,7 +328,7 @@
           "TestDashfunctionLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TestDashfunctionLambdaVersion3Ue9fdWzNxFyiMC2O5W6rA1CVBlC4pZT3jWiQTai230"
+              "Ref": "TestDashfunctionLambdaVersionTk64hwqsMyrYlOrPpclMkW8m3yaSP51LcskvLn9hZU"
             }
           },
           "ServiceEndpoint": {
@@ -415,7 +428,7 @@
     "pluginsData": {},
     "functions": {
       "test-function": {
-        "handler": "script.handler",
+        "handler": "plumber",
         "layers": {
           "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"TestDashfunctionLambdaFunction\"][\"Properties\"][\"Layers\"]"
         },
@@ -426,7 +439,7 @@
           {
             "http": {
               "method": "post",
-              "path": "",
+              "path": "echo",
               "integration": "AWS_PROXY"
             }
           }
@@ -437,7 +450,7 @@
         "timeout": 6,
         "runtime": "provided",
         "vpc": {},
-        "versionLogicalId": "TestDashfunctionLambdaVersion3Ue9fdWzNxFyiMC2O5W6rA1CVBlC4pZT3jWiQTai230"
+        "versionLogicalId": "TestDashfunctionLambdaVersionTk64hwqsMyrYlOrPpclMkW8m3yaSP51LcskvLn9hZU"
       }
     },
     "serviceFilename": "serverless.yml",
@@ -446,7 +459,7 @@
     "artifact": "/Users/nadir.sidi/Code/Personal-Github/aws-lambda-httpuv/example/.serverless/serverlessr-test.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/serverlessr-test/dev/1593455119298-2020-06-29T18:25:19.298Z",
+    "artifactDirectoryName": "serverless/serverlessr-test/dev/1593976424778-2020-07-05T19:13:44.778Z",
     "artifact": "serverlessr-test.zip"
   }
 }

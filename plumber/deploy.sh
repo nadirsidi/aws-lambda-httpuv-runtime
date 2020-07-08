@@ -14,6 +14,13 @@ BASE_DIR=$(pwd)
 BUILD_DIR=${BASE_DIR}/build/
 
 cd ${BUILD_DIR}/layer/
+
+# Try to save space!!!
+rm -rf ./R/library/*/html
+rm -rf ./R/library/*/doc
+rm -rf ./R/library/*/NEWS.md
+rm -rf ./R/library/*/help
+
 zip -r -q plumber-${VERSION}.zip .
 mkdir -p ${BUILD_DIR}/dist/
 mv plumber-${VERSION}.zip ${BUILD_DIR}/dist/

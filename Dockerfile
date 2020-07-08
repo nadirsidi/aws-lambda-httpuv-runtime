@@ -26,5 +26,17 @@ RUN ./configure --prefix=${R_DIR} --exec-prefix=${R_DIR} --with-libpth-prefix=/o
     cp /usr/lib64/libstdc++.so.6 lib/
 RUN yum install -q -y openssl-devel libxml2-devel && \
     ./bin/Rscript -e 'install.packages(c("httr", "aws.s3", "logging"), repos="http://cran.r-project.org")'
+
+# Make a temporary library to get helper packages that we don't want in the layer
+RUN export R_LIBS_TMP=${R_DIR}tmp-library && \
+    mkdir -p ${R_LIBS_TMP}
+
+# Use remotes to install my hacked httpuv library
+RUN ./bin/Rscript -e '.libPaths(Sys.getenv("R_LIBS_TMP")); install.packages("remotes", repos = "http://cran.r-project.org")'
+RUN ./bin/Rscript -e '.libPaths(c(.libPaths(), Sys.getenv("R_LIBS_TMP"))); remotes::install_github("nadirsidi/httpuv", ref = "lite")'
+
+# Get rid of remotes
+RUN rm -rf ${R_LIBS_TMP}
+
 CMD mkdir -p /var/r/ && \
     cp -r bin/ lib/ etc/ library/ doc/ modules/ share/ /var/r/
