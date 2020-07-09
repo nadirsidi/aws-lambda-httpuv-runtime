@@ -7,7 +7,6 @@ error_to_payload <- function(error) {
 }
 
 post_error <- function(error, url) {
-  initializeLogging()
   logerror(error, logger = 'runtime')
   res <- POST(url,
               add_headers("Lambda-Runtime-Function-Error-Type" = "Unhandled"),
@@ -27,14 +26,14 @@ get_source_file_name <- function(file_base_name) {
     return(file_name)
 }
 
-invoke_lambda <- function(event_response, function_name) {
-    # params <- fromJSON(EVENT_DATA)
-    params <- list("event_response" = event_response)
-    logdebug("Invoking function '%s' with parameters:\n%s", function_name, to_str(params), logger = 'runtime')
-    result <- do.call(function_name, params)
-    logdebug("Function returned:\n%s", to_str(result), logger = 'runtime')
-    return(result)
-}
+# invoke_lambda <- function(event_response, function_name) {
+#     # params <- fromJSON(EVENT_DATA)
+#     params <- list("event_response" = event_response)
+#     logdebug("Invoking function '%s' with parameters:\n%s", function_name, to_str(params), logger = 'runtime')
+#     result <- do.call(function_name, params)
+#     logdebug("Function returned:\n%s", to_str(result), logger = 'runtime')
+#     return(result)
+# }
 
 initializeLogging <- function() {
   cat("Initializing Logging...\n", file = stderr())
@@ -48,15 +47,11 @@ initializeLogging <- function() {
 }
 
 initializeRuntime <- function() {
-  cat("Initializing Runtime...\n", file = stderr())
-  library(httr)
-  cat("Successfully loaded httr library...\n")
-  library(jsonlite)
-  cat("Successfully loaded jsonlite library...\n")
-  library(plumber)
-  cat("Successfully loaded plumber library...\n")
 
-  cat("Calling initializeLogging()...\n", file = stderr())
+  library(httr)
+  library(jsonlite)
+  library(plumber)
+
   initializeLogging()
   HANDLER <- Sys.getenv("_HANDLER")
   file_name <- get_source_file_name(HANDLER)  # Changing the handler to be the R file to plumb
@@ -81,12 +76,28 @@ throwRuntimeError <- function(error, REQUEST_ID) {
     post_error(error, url)
 }
 
-postResult <- function(result, REQUEST_ID) {
+postResult <- function(resp, REQUEST_ID) {
     url <- paste0(API_ENDPOINT, "invocation/", REQUEST_ID, "/response")
     # TODO(nadir.sidi): Change this to translate the rook named list response to a POST back to lambda API
-    res <- POST(url, body = result$body, encode = "raw", content_type("text/plain; charset=UTF-8"))
-    logdebug("Posted result:\n%s", str(result), logger = 'runtime')
-    logdebug("Body:\n%s", result$body, logger = 'runtime')
+
+    logdebug("Response from plumber:\n", logger = 'runtime')
+    cat(str(resp), file = stderr())
+
+    # API Gateway Lambda Proxy requires a very specific, JSON response format
+    lambdaResponse = list(
+      "statusCode" = resp$status,
+      "headers" = resp$headers,
+      "body" = resp$body,
+      "isBase64Encoded" = FALSE
+    )
+
+    # TODO(nadir.sidi): Need to set isBase64Encoded to TRUE if binary file is returned; How to return a png image?
+    res <- POST(url, body = toJSON(lambdaResponse, auto_unbox = TRUE), encode = "raw", content_type_json())
+
+    logdebug("Response from POST result:\n")
+    cat(str(res), file=stderr())
+    logdebug("Response Details:\n")
+    cat(str(httr::content(res)), file=stderr())
 }
 
 handle_request <- function(app) {
@@ -108,29 +119,42 @@ handle_request <- function(app) {
     })
 }
 
+# Need to build tests for this 
+rebuild_query_string = function(queryStringParams) {
+  # Unpack the nested-list
+  queryArray <- unlist(lapply(queryStringParams, function(x) unlist(x) ))
+  # Rebuild the query string as-expected by plumber
+  queryString <- sapply(seq(1:length(queryArray)), function(i) { paste( c(attr(queryArray, "names")[i], queryArray[i]), collapse = "=") })
+  queryString <- paste0("?", queryString)
+  logdebug("Query String:\t", logger='runtime')
+  cat(queryString, "\n", file=stderr())
+  return(queryString)
+}
+
 build_req_env <- function(eventResponse) {
   req <- new.env()
-  logdebug("eventResponse Structure:\n", logger = 'runtime')
-  # str(eventResponse)
 
-  req$HEADERS <- c(
-    "content-type" = eventResponse$headers$`content-type`
-  )
-  req$HTTP_ACCEPT <- eventResponse$request$headers["Accept"]
-  req$HTTP_ACCEPT_ENCODING <- "gzip, deflate"
-  req$HTTP_ACCEPT_LANGUAGE <- "en-US,en;q=0.5"
-  req$HTTP_CONNECTION <- "keep-alive"
-  req$HTTP_HOST <- "127.0.0.1/9001"
+  content <- httr::content(eventResponse)
+
+  # logdebug("Content after calling httr::content():\n", logger='runtime')
+  # cat(str(content), file=stderr())
+
+  req$HEADERS <- unlist(content$headers)
+  req$HTTP_ACCEPT <- unlist(content$multiValueHeaders$Accept)
+  req$HTTP_ACCEPT_ENCODING <- unlist(content$multiValueHeaders$`Accept-Encoding`)
+  req$HTTP_ACCEPT_LANGUAGE <- ""
+  req$HTTP_CONNECTION <- ""
+  req$HTTP_HOST <- unlist(content$multiValueHeaders$Host)
   req$HTTP_UPGRADE_INSECURE_REQUESTS <- "0"
-  req$HTTP_USER_AGENT <- ""
-  req$REQUEST_METHOD <- eventResponse$request$method
+  req$HTTP_USER_AGENT <- unlist(content$multiValueHeaders$`User-Agent`)
+  req$REQUEST_METHOD <- content$httpMethod
   req$SCRIPT_NAME <- ""
-  req$PATH_INFO <- "/echo"
-  req$QUERY_STRING <- "?msg=Nadir"
-  req$SERVER_NAME <- "127.0.0.1"
-  req$SERVER_PORT <- "9001"
+  req$PATH_INFO <- content$path
+  req$QUERY_STRING <- rebuild_query_string(content$multiValueQueryStringParameters)
+  req$SERVER_NAME <- ""
+  req$SERVER_PORT <- ""
 
-  req$.bodyData <- NULL
+  req$.bodyData <- content$body
 
   return(req)
 }

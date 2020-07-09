@@ -118,6 +118,22 @@
                       "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/serverlessr-test-dev*:*:*"
                     }
                   ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:ListBucket",
+                    "s3:GetObject"
+                  ],
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        "r-plumber-lambda"
+                      ]
+                    ]
+                  }
                 }
               ]
             }
@@ -146,7 +162,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/serverlessr-test/dev/1593976424778-2020-07-05T19:13:44.778Z/serverlessr-test.zip"
+          "S3Key": "serverless/serverlessr-test/dev/1594262752306-2020-07-09T02:45:52.306Z/serverlessr-test.zip"
         },
         "FunctionName": "serverlessr-test-dev-test-function",
         "Handler": "plumber",
@@ -165,15 +181,14 @@
           }
         },
         "Layers": [
-          "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:20",
-          "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-plumber:9"
+          "arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:39"
         ]
       },
       "DependsOn": [
         "TestDashfunctionLogGroup"
       ]
     },
-    "TestDashfunctionLambdaVersionTk64hwqsMyrYlOrPpclMkW8m3yaSP51LcskvLn9hZU": {
+    "TestDashfunctionLambdaVersionGI0xWpainjEq4IvyqssHr2ZJZou5ZtLi8VtMUFznQZQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -210,10 +225,40 @@
         }
       }
     },
-    "ApiGatewayMethodEchoPost": {
+    "ApiGatewayResourcePlot": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "plot",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceSum": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "sum",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodEchoGet": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
-        "HttpMethod": "POST",
+        "HttpMethod": "GET",
         "RequestParameters": {},
         "ResourceId": {
           "Ref": "ApiGatewayResourceEcho"
@@ -253,7 +298,93 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1593976424119": {
+    "ApiGatewayMethodPlotGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourcePlot"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "TestDashfunctionLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      }
+    },
+    "ApiGatewayMethodSumPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceSum"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "TestDashfunctionLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      }
+    },
+    "ApiGatewayDeployment1594262751717": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -262,7 +393,9 @@
         "StageName": "dev"
       },
       "DependsOn": [
-        "ApiGatewayMethodEchoPost"
+        "ApiGatewayMethodEchoGet",
+        "ApiGatewayMethodPlotGet",
+        "ApiGatewayMethodSumPost"
       ]
     },
     "TestDashfunctionLambdaPermissionApiGateway": {
@@ -312,7 +445,7 @@
     "TestDashfunctionLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "TestDashfunctionLambdaVersionTk64hwqsMyrYlOrPpclMkW8m3yaSP51LcskvLn9hZU"
+        "Ref": "TestDashfunctionLambdaVersionGI0xWpainjEq4IvyqssHr2ZJZou5ZtLi8VtMUFznQZQ"
       }
     },
     "ServiceEndpoint": {

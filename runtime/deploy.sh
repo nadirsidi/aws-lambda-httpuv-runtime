@@ -18,8 +18,9 @@ zip -r -q runtime-${VERSION}.zip .
 mkdir -p ${BUILD_DIR}/dist/
 mv runtime-${VERSION}.zip ${BUILD_DIR}/dist/
 version_="${VERSION//\./_}"
-# aws lambda publish-layer-version \
-#     --layer-name r-runtime-${version_} \
-#     --zip-file fileb://${BUILD_DIR}/dist/runtime-${VERSION}.zip \
-#     --profile nadir-personal \
-#     --region us-west-2
+
+aws --profile nadir-personal \
+  --region us-east-2 \
+  lambda publish-layer-version \
+  --layer-name R-3_6_3-RookRuntime \
+  --zip-file fileb://${BUILD_DIR}/dist/runtime-${VERSION}.zip

@@ -15,20 +15,24 @@ provider:
         Fn::Join:
           - ''
           - - 'arn:aws:s3:::'
-          - - Ref: ServerlessDeploymentBucket
-
+            - 'r-plumber-lambda'
 functions:
   test-function:
     handler: plumber
     layers:
-      - arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:20
-      # - arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-plumber:9
+      - arn:aws:lambda:us-east-2:144438831032:layer:R-3_6_3-RookRuntime:39
     environment:
       LOGLEVEL: DEBUG
     events:
       - http:
-          method: post
+          method: get
           path: /echo
+      - http:
+          method: get
+          path: /plot
+      - http:
+          method: post
+          path: /sum
           # integration: lambda
           # request:
           #   template:
