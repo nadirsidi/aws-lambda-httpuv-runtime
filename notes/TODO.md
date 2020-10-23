@@ -1,14 +1,11 @@
 # TODO Items
 
-Currently, plumber is failing because it can't find the function `runSteps()`. This is something I took out because it was in the async.R script, which required promises. Re-create this function, but make it sync only.
-
-NEW APPROACH: Package Plumber and dependencies and POST them to S3; Call this archive, and unzip into /tmp at lambda runtime on coldstart. This is the Zappa slim handler approach. Path when unzipped will be `/tmp/R/library`
-https://github.com/Miserlou/Zappa/blob/93804a1b3157f0189bf062e01baab2bd4f09400d/zappa/handler.py#L151-L177
-
-## Well Fuck
-Serverless Error ---------------------------------------
-
-An error occurred: TestDashfunctionLambdaFunction - Layers consume more than the available size of 262144000 bytes (Service: AWSLambdaInternal; Status Code: 400; Error Code: InvalidParameterValueException; Request ID: a856411c-871c-4215-ad92-2968a78ccb54).
+* Add unit tests for runtime functions
+* Figure out how to get the other plumber examples to work
+* Update README
+* Update license
+* Clean-up all the files used for building the layer
+* Package the runtime into an R package (aws.plumber)?
 
 ## Priority 1
 
@@ -20,3 +17,6 @@ An error occurred: TestDashfunctionLambdaFunction - Layers consume more than the
 * Automate building the layers in AWS CodeBuild
 * Add tests
 * Update serverless yaml to show example with nice Route53 url and api key
+
+NEW APPROACH: Package Plumber and dependencies and POST them to S3; Call this archive, and unzip into /tmp at lambda runtime on coldstart. This is the Zappa slim handler approach. Path when unzipped will be `/tmp/R/library`
+https://github.com/Miserlou/Zappa/blob/93804a1b3157f0189bf062e01baab2bd4f09400d/zappa/handler.py#L151-L177
